@@ -1,21 +1,21 @@
 import express from 'express';
 import * as notesController from '../controllers/notesController.js';
 
-const router = express.Router();
+const notesRouter = express.Router();
 
-router.get('/:id', notesController.getOne);
-router.get('/filter', notesController.getMany);
-router.get('/', notesController.getAll);
+notesRouter.get('/:id', notesController.getOne);
+notesRouter.get('/filter', notesController.getMany);
+notesRouter.get('/', notesController.getAll);
 
 // insert recebe nota pelo body
-router.post('/', notesController.insert);
+notesRouter.post('/', notesController.insert);
 
 // updateMany recebe filtro pelo body
-router.put('/:id', notesController.updateOne);
-router.put('/', notesController.updateMany);
+notesRouter.patch('/:id', notesController.updateOne);
+notesRouter.patch('/', notesController.updateMany);
 
 // deleteMany recebe filtro pelo body
-router.delete('/:id', notesController.deleteOne);
-router.delete('/', notesController.deleteMany);
+notesRouter.delete('/:id', notesController.deleteOne);
+notesRouter.delete('/', notesController.deleteMany);
 
-export default router;
+export default notesRouter;

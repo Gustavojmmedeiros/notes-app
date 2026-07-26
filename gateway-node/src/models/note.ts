@@ -1,4 +1,4 @@
-import type { Tag } from './tag';
+import type { Tag } from './tag.ts';
 
 export interface Note {
     id: number;
