@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
 import type { Note } from '../models/note.js';
-import { parseNoteFilters } from '../types/filters.js';
+import { parseNoteFilters } from '../utils/fn.js';
 
 // Simulação de banco em memória (temporário)
 let notes: Note[] = [];
@@ -45,6 +45,23 @@ export const getAll = (req: Request, res: Response) => {
 export const insert = (req: Request, res: Response) => {
 
   validate(req);
+
+  let { title, content, tags = [] } = req.body;
+
+  if(!title || !content) res.status(400).json({ error: 'Title and Content are mandatory' });
+
+  const note: Note = {
+    id: nextId++,
+    title: title,
+    content: content,
+    tags: tags,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+
+  notes.push(note);
+
+  return res.status(201).json({ note: note });
 }
 
 // '/:id and body'
