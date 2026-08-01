@@ -16,7 +16,7 @@ export const getOne = (req: Request, res: Response) => {
 
   if(!note) return res.status(404).json({ error: 'Note not found' });
 
-  return res.json({ note });
+  return res.json({ result: note });
 }
 
 // 'query'
@@ -30,7 +30,7 @@ export const getMany = (req: Request, res: Response) => {
   if(filters.title) filteredNotes = filteredNotes.filter(n => n.title.includes(filters.title!));
   if(filters.tag) filteredNotes = filteredNotes.filter(n => n.title.includes(filters.tag!));
 
-  return res.json({ notes: filteredNotes });
+  return res.json({ result: filteredNotes });
 }
 
 // '/'
@@ -38,7 +38,7 @@ export const getAll = (req: Request, res: Response) => {
 
   validate(req);
 
-  return res.json({ notes });
+  return res.json({ result: notes });
 }
 
 // 'body'
@@ -62,51 +62,88 @@ export const insert = (req: Request, res: Response) => {
 
   notes.push(note);
 
-  return res.status(201).json({ note: note });
+  return res.status(201).json({ result: note });
 }
 
-export const updateOne = (req: Request, res: Response) => {
+export const update = (req: Request, res: Response) => {
 
   validate(req);
-  
-  let id = parseId(req), // id da nota
-      { title, content, tags } = req.body, // campos a atualizar (opcionais)
+
+  let notesToUpdate: Note[] = [];
+
+  // updateMany /notes/api/
+  if(req.body?.ids) {
+
+    let { ids } = req.body;
+
+    if(!Array.isArray(ids) || ids.length === 0) res.status(400).json({ error: 'Invalid ids' });
+
+    for(const id of ids) {
+
+      let note = notes.find(n => n.id === id);
+
+      if(!note) return res.status(404).json({ error: `Note with id ${id} does not exist` });
+
+      notesToUpdate.push(note);
+    }
+
+    // updateOne /notes/api/:id
+  } else if(req?.params && req.body.id) {
+
+    let id = parseId(req), // id da nota
       note = notes.find(n => n.id === id); // 
 
-  if(!note) return res.status(404).json({ error: 'Note does not exist' });
+    if(!note) return res.status(404).json({ error: 'Note does not exist' });
 
-  console.log('note: ', note);
-  console.log('id alvo: ', id);
-  console.log('title: ', title);
+    notesToUpdate.push(note);
+  }
+
+  let { title, content, tags = [] } = req.body; // campos a atualizar individualmente (opcionais)
 
   // TODO: se não tiver nada pra atualizar, não faz nada
   if(!title && !content && !tags) return res.status(400).json({ error: 'Nothing to update' });
 
-  note.title = title ?? note.title;
-  note.content = content ?? note.content;
-  note.tags = tags ?? note.tags;
-  note.updatedAt = new Date().toISOString();
+  for(const note of notesToUpdate) {
+    note.title = title ?? note.title;
+    note.content = content ?? note.content;
+    note.tags = tags ?? note.tags;
+    note.updatedAt = new Date().toISOString();
+  }
 
-  return res.status(200).json({ note });
+  return res.status(200).json({ result: notesToUpdate });
 
 }
 
-// 'body'
-export const updateMany = (req: Request, res: Response) => {
-
-  validate(req);
-}
 
 // '/:id'
 export const deleteOne = (req: Request, res: Response) => {
 
   validate(req);
+
+  // notes = notes.filter(n => !ids.includes(n.id));
+
+  let id = parseId(req),
+      index = notes.findIndex(n => n.id === id);
+
+  if(index === -1) return res.status(404).json({ error: `Note with id ${id} does not exist` });
+
+  let result = notes.splice(index, 1),
+      removedNote = result[0];
+
+  console.log('result: ', result);
+
+  console.log(`Note with id ${removedNote!.id} removed`);
+
+  if(removedNote!.id === id) return res.status(204).send();
+  
 }
 
 // 'body'
 export const deleteMany = (req: Request, res: Response) => {
 
   validate(req);
+
+  
 }
 
 // Helper Function
