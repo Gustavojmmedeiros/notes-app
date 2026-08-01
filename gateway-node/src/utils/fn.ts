@@ -1,8 +1,10 @@
 import type { Request } from 'express';
 import type { NoteFilters } from '../types/index.js';
 
-function setId(req: object) {
-    // if(!req?.params?.id) new Error('Wrong usage of setId()');
+export const parseId = (req: Request) => {
+  let { id } = req.params;
+
+  return parseInt(id as string);
 }
 
 export const parseNoteFilters = (req: Request): NoteFilters => {

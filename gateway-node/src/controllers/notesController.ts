@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
-import type { Note } from '../models/note.js';
-import { parseNoteFilters } from '../utils/fn.js';
+import type { Note } from '../types/index.js';
+import { parseId, parseNoteFilters } from '../utils/fn.js';
 
 // Simulação de banco em memória (temporário)
 let notes: Note[] = [];
@@ -11,7 +11,7 @@ export const getOne = (req: Request, res: Response) => {
 
   validate(req);
 
-  let id   = parseInt(req.params.id as string),
+  let id   = parseId(req),
       note = notes.find(n => n.id === id);
 
   if(!note) return res.status(404).json({ error: 'Note not found' });
@@ -51,6 +51,7 @@ export const insert = (req: Request, res: Response) => {
   if(!title || !content) res.status(400).json({ error: 'Title and Content are mandatory' });
 
   const note: Note = {
+    // TODO: trocar nextId (dentro da função)
     id: nextId++,
     title: title,
     content: content,
@@ -64,10 +65,30 @@ export const insert = (req: Request, res: Response) => {
   return res.status(201).json({ note: note });
 }
 
-// '/:id and body'
 export const updateOne = (req: Request, res: Response) => {
 
   validate(req);
+  
+  let id = parseId(req), // id da nota
+      { title, content, tags } = req.body, // campos a atualizar (opcionais)
+      note = notes.find(n => n.id === id); // 
+
+  if(!note) return res.status(404).json({ error: 'Note does not exist' });
+
+  console.log('note: ', note);
+  console.log('id alvo: ', id);
+  console.log('title: ', title);
+
+  // TODO: se não tiver nada pra atualizar, não faz nada
+  if(!title && !content && !tags) return res.status(400).json({ error: 'Nothing to update' });
+
+  note.title = title ?? note.title;
+  note.content = content ?? note.content;
+  note.tags = tags ?? note.tags;
+  note.updatedAt = new Date().toISOString();
+
+  return res.status(200).json({ note });
+
 }
 
 // 'body'
