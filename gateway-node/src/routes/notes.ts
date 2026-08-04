@@ -11,11 +11,11 @@ notesRouter.get('/', notesController.getAll);
 notesRouter.post('/', notesController.insert);
 
 // updateMany recebe filtro pelo body
-notesRouter.patch('/:id', notesController.updateOne);
-notesRouter.patch('/', notesController.updateMany);
+notesRouter.patch('/:id', notesController.update);
+notesRouter.patch('/', notesController.update);
 
 // deleteMany recebe filtro pelo body
-notesRouter.delete('/:id', notesController.deleteOne);
-notesRouter.delete('/', notesController.deleteMany);
+notesRouter.delete('/:id', notesController.remove);
+notesRouter.delete('/', notesController.remove);
 
 export default notesRouter;
