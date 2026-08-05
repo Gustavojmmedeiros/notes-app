@@ -2,22 +2,37 @@ import type { Request, Response } from 'express';
 import type { Note } from '../types/index.js';
 import { parseId, parseNoteFilters } from '../utils/fn.js';
 import { javaClient } from '../services/javaClient.js';
+import axios from 'axios';
 
 // Simulação de banco em memória (temporário)
 let notes: Note[] = [];
-let nextId = 1;
 
 // '/:id'
-export const getOne = (req: Request, res: Response) => {
+export const getOne = async (req: Request, res: Response) => {
 
   validate(req);
 
-  let id   = parseId(req),
-      note = notes.find(n => n.id === id);
+  let id = parseId(req);
 
-  if(!note) return res.status(404).json({ error: 'Note not found' });
+  if(!id) return res.status(404).json({ error: 'Note not found' });
 
-  return res.json({ result: note });
+  try {
+
+    let response = await javaClient.get(`/notes/${id}`);
+
+    return res.status(200).json({ note: response.data });
+
+  } catch(error) {
+
+    if(axios.isAxiosError(error)) {
+      if(error.response?.status === 404) return res.status(404).json({ error: `Cannot find note with id ${id}` })
+    }
+  
+    if(error instanceof Error && error.message.includes('ECONNREFUSED')) return res.status(503).json({ error: 'Notes service unavailable' });
+    
+    return res.status(500).json({ error: `Error fetching note with id ${id}` });
+    
+  }
 }
 
 // 'query'
@@ -39,8 +54,6 @@ export const getAll = async (req: Request, res: Response) => {
 
   validate(req);
 
-  // return res.json({ result: notes });
-
   try {
 
     let response = await javaClient.get('/notes');
@@ -49,13 +62,12 @@ export const getAll = async (req: Request, res: Response) => {
 
   } catch(e) {
 
-    console.log('Erro: ', e);
     return res.status(500).json({ error: 'Error fetching notes' });
   }
 }
 
 // 'body'
-export const insert = (req: Request, res: Response) => {
+export const insert = async (req: Request, res: Response) => {
 
   validate(req);
 
@@ -63,19 +75,23 @@ export const insert = (req: Request, res: Response) => {
 
   if(!title || !content) res.status(400).json({ error: 'Title and Content are mandatory' });
 
-  const note: Note = {
-    // TODO: trocar nextId (dentro da função)
-    id: nextId++,
-    title: title,
-    content: content,
-    tags: tags,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  };
+  try {
 
-  notes.push(note);
+    let response = await javaClient.post('/notes', { title, content, tags });
 
-  return res.status(201).json({ result: note });
+    return res.status(201).json({ note: response.data });
+
+  } catch(e) {
+
+    if(axios.isAxiosError(e)) {
+      if(e.response) return res.status(e.response.data).json(e.response.data);
+    }
+
+    if(e instanceof Error && e.message.includes('ECONNREFUSED')) return res.status(503).json({ error: 'Notes service unavailable' });
+
+    return res.status(500).json({ error: 'Error creating note' });
+
+  }
 }
 
 // '/:id' or 'body'
