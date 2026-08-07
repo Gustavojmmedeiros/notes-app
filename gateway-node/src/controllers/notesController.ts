@@ -10,6 +10,7 @@ let notes: Note[] = [];
 // '/:id'
 export const getOne = async (req: Request, res: Response) => {
 
+  console.log('getOne');
   validate(req);
 
   let id = parseId(req);
@@ -22,13 +23,13 @@ export const getOne = async (req: Request, res: Response) => {
 
     return res.status(200).json({ note: response.data });
 
-  } catch(error) {
+  } catch(e) {
 
-    if(axios.isAxiosError(error)) {
-      if(error.response?.status === 404) return res.status(404).json({ error: `Cannot find note with id ${id}` })
+    if(axios.isAxiosError(e)) {
+      if(e.response?.status === 404) return res.status(404).json({ error: `Cannot find note with id ${id}` })
     }
   
-    if(error instanceof Error && error.message.includes('ECONNREFUSED')) return res.status(503).json({ error: 'Notes service unavailable' });
+    if(e instanceof Error && e.message.includes('ECONNREFUSED')) return res.status(503).json({ error: 'Notes service unavailable' });
     
     return res.status(500).json({ error: `Error fetching note with id ${id}` });
     
@@ -36,22 +37,45 @@ export const getOne = async (req: Request, res: Response) => {
 }
 
 // 'query'
-export const getMany = (req: Request, res: Response) => {
+export const getMany = async (req: Request, res: Response) => {
 
   validate(req);
 
-  let filters       = parseNoteFilters(req),
-      filteredNotes = notes;
+  // let filters = parseNoteFilters(req);
+  let { title, tag } = req.query;
 
-  if(filters.title) filteredNotes = filteredNotes.filter(n => n.title.includes(filters.title!));
-  if(filters.tag) filteredNotes = filteredNotes.filter(n => n.title.includes(filters.tag!));
+  try {
 
-  return res.json({ result: filteredNotes });
+    let params = new URLSearchParams();
+
+    if(title) params.append('title', title as string);
+    if(tag) params.append('tag', tag as string);
+
+    console.log('Chamando Java com:', `/notes?${params.toString()}`);
+    
+    let response = await javaClient.get(`/notes?${params.toString()}`);
+
+    return res.status(200).json({ notes: response.data });
+    
+  } catch(e) {
+    
+    if(axios.isAxiosError(e)) {
+      // console.log('e.response: ', e.response);
+      if(e.response?.status === 404) return res.status(404).json({ error: `Cannot find notes with selected filters` });
+    }
+
+    if(e instanceof Error && e.message.includes('ECONNREFUSED')) return res.status(503).json({ error: 'Notes service unavailable' });
+
+    return res.status(500).json({ error: 'Error fetching notes' });
+    
+  }
 }
 
 // '/'
 export const getAll = async (req: Request, res: Response) => {
 
+  console.log('getAll');
+  // console.log('req: ', req);
   validate(req);
 
   try {
@@ -63,6 +87,7 @@ export const getAll = async (req: Request, res: Response) => {
   } catch(e) {
 
     return res.status(500).json({ error: 'Error fetching notes' });
+
   }
 }
 

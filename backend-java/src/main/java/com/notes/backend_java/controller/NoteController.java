@@ -18,17 +18,32 @@ public class NoteController {
     this.noteRepository = noteRepository;
   }
 
-  // GET /notes - getAll
-  @GetMapping
-  public List<Note> getAll() {
-    return noteRepository.findAll();
-  }
-
   // GET /notes/:id - getOne
   @GetMapping("/{id}")
   public Note getOne(@PathVariable Long id) {
       return noteRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Note not found"));
+  }
+
+  // GET /notes/filters - getMany
+  @GetMapping
+  public List<Note> getMany(
+    @RequestParam(required = false) String title,
+    @RequestParam(required = false) String tag) {
+
+    if(title != null && tag != null) {
+      return noteRepository.findByTitleContainingAndTagsContaining(title, tag);
+    }
+
+    if(title != null) {
+      return noteRepository.findByTitleContaining(title);
+    }
+
+    if(tag != null) {
+      return noteRepository.findByTagsContaining(tag);
+    }
+
+    return noteRepository.findAll();
   }
   
   // POST /notes - insert
