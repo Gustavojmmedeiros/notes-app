@@ -4,11 +4,11 @@ import * as notesController from '../controllers/notesController.js';
 const notesRouter = express.Router();
 
 notesRouter.get('/:id', notesController.getOne);
-notesRouter.get('/filter', notesController.getMany);
+notesRouter.post('/', notesController.getMany);
 notesRouter.get('/', notesController.getAll);
 
 // insert recebe nota pelo body
-notesRouter.post('/', notesController.insert);
+notesRouter.put('/', notesController.insert);
 
 // updateMany recebe filtro pelo body
 notesRouter.patch('/:id', notesController.update);

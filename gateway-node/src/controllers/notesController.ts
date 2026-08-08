@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
-import type { Note } from '../types/index.js';
-import { parseId, parseNoteFilters } from '../utils/fn.js';
+import type { Note, NoteFilters } from '../types/index.js';
+import { parseId } from '../utils/fn.js';
 import { javaClient } from '../services/javaClient.js';
 import axios from 'axios';
 
@@ -10,6 +10,7 @@ let notes: Note[] = [];
 // '/:id'
 export const getOne = async (req: Request, res: Response) => {
 
+  console.log('getOne');
   validate(req);
 
   let id = parseId(req);
@@ -22,13 +23,13 @@ export const getOne = async (req: Request, res: Response) => {
 
     return res.status(200).json({ note: response.data });
 
-  } catch(error) {
+  } catch(e) {
 
-    if(axios.isAxiosError(error)) {
-      if(error.response?.status === 404) return res.status(404).json({ error: `Cannot find note with id ${id}` })
+    if(axios.isAxiosError(e)) {
+      if(e.response?.status === 404) return res.status(404).json({ error: `Cannot find note with id ${id}` })
     }
   
-    if(error instanceof Error && error.message.includes('ECONNREFUSED')) return res.status(503).json({ error: 'Notes service unavailable' });
+    if(e instanceof Error && e.message.includes('ECONNREFUSED')) return res.status(503).json({ error: 'Notes service unavailable' });
     
     return res.status(500).json({ error: `Error fetching note with id ${id}` });
     
@@ -36,22 +37,50 @@ export const getOne = async (req: Request, res: Response) => {
 }
 
 // 'query'
-export const getMany = (req: Request, res: Response) => {
+export const getMany = async (req: Request, res: Response) => {
 
   validate(req);
 
-  let filters       = parseNoteFilters(req),
-      filteredNotes = notes;
+  let filters = parseNoteFilters(req);
 
-  if(filters.title) filteredNotes = filteredNotes.filter(n => n.title.includes(filters.title!));
-  if(filters.tag) filteredNotes = filteredNotes.filter(n => n.title.includes(filters.tag!));
+  try {
 
-  return res.json({ result: filteredNotes });
+    let params = new URLSearchParams();
+
+    Object.entries(filters).forEach(([key, value]) => {
+      if(value === undefined || value === null) return;
+
+      if(key === 'ids' && Array.isArray(value) && value.length > 0) {
+        params.append('ids', value.join(','));
+
+      } else if(typeof value === 'string') {
+        params.append(key, value);
+      }
+    });
+    
+    let formattedParams = params.toString(),
+        response        = await javaClient.get(`/notes?${formattedParams}`);
+
+    return res.status(200).json({ notes: response.data });
+    
+  } catch(e) {
+    
+    if(axios.isAxiosError(e)) {
+      if(e.response?.status === 404) return res.status(404).json({ error: `Cannot find notes with selected filters` });
+    }
+
+    if(e instanceof Error && e.message.includes('ECONNREFUSED')) return res.status(503).json({ error: 'Notes service unavailable' });
+
+    return res.status(500).json({ error: 'Error fetching notes' });
+    
+  }
 }
 
 // '/'
 export const getAll = async (req: Request, res: Response) => {
 
+  console.log('getAll');
+  // console.log('req: ', req);
   validate(req);
 
   try {
@@ -63,6 +92,7 @@ export const getAll = async (req: Request, res: Response) => {
   } catch(e) {
 
     return res.status(500).json({ error: 'Error fetching notes' });
+
   }
 }
 
@@ -71,13 +101,15 @@ export const insert = async (req: Request, res: Response) => {
 
   validate(req);
 
+  console.log('req.body: ', req.body);
+
   let { title, content, tags = [] } = req.body;
 
   if(!title || !content) res.status(400).json({ error: 'Title and Content are mandatory' });
 
   try {
 
-    let response = await javaClient.post('/notes', { title, content, tags });
+    let response = await javaClient.put('/notes', { title, content, tags });
 
     return res.status(201).json({ note: response.data });
 
@@ -205,4 +237,17 @@ const validate = (req: Request) => {
 
     if(isNaN(numId)) new Error('Invalid id NaN');
   }
+}
+
+const parseNoteFilters = (req: Request): NoteFilters => {
+  let { content, ids, tag, title } = req.body;
+
+  let filters: NoteFilters = {};
+
+  if(typeof content === 'string') filters.content = content;
+  if(typeof tag === 'string') filters.tag = tag;
+  if(typeof title === 'string') filters.title = title;
+  if(Array.isArray(ids) && ids.every(id => typeof id === 'number')) filters.ids = ids;
+
+  return filters;
 }
