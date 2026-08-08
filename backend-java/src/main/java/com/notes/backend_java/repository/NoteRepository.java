@@ -7,8 +7,12 @@ import java.util.List;
 
 @Repository
 public interface NoteRepository extends JpaRepository<Note, Long> {
-
-  List<Note> findByTitleContaining(String title);
-  List<Note> findByTagsContaining(String tag);
-  List<Note> findByTitleContainingAndTagsContaining(String title, String tag);
+  List<Note> findByContent(String content);
+  List<Note> findByTags(String tags);
+  List<Note> findByTitle(String title);
+  List<Note> findByContentAndTags(String content, String tag);
+  List<Note> findByContentAndTitle(String content, String title);
+  List<Note> findByTagsAndTitle(String tags, String title);
+  List<Note> findByContentAndTagsAndTitle(String content, String tags, 
+    String title);
 }

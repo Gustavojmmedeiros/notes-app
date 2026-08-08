@@ -14,6 +14,8 @@ export interface Tag {
 }
 
 export interface NoteFilters {
-  title?: string;
+  ids?: number[];
+  content?: string;
   tag?: string;
+  title?: string;
 }

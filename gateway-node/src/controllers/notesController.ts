@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
-import type { Note } from '../types/index.js';
-import { parseId, parseNoteFilters } from '../utils/fn.js';
+import type { Note, NoteFilters } from '../types/index.js';
+import { parseId } from '../utils/fn.js';
 import { javaClient } from '../services/javaClient.js';
 import axios from 'axios';
 
@@ -41,26 +41,31 @@ export const getMany = async (req: Request, res: Response) => {
 
   validate(req);
 
-  // let filters = parseNoteFilters(req);
-  let { title, tag } = req.query;
+  let filters = parseNoteFilters(req);
 
   try {
 
     let params = new URLSearchParams();
 
-    if(title) params.append('title', title as string);
-    if(tag) params.append('tag', tag as string);
+    Object.entries(filters).forEach(([key, value]) => {
+      if(value === undefined || value === null) return;
 
-    console.log('Chamando Java com:', `/notes?${params.toString()}`);
+      if(key === 'ids' && Array.isArray(value) && value.length > 0) {
+        params.append('ids', value.join(','));
+
+      } else if(typeof value === 'string') {
+        params.append(key, value);
+      }
+    });
     
-    let response = await javaClient.get(`/notes?${params.toString()}`);
+    let formattedParams = params.toString(),
+        response        = await javaClient.get(`/notes?${formattedParams}`);
 
     return res.status(200).json({ notes: response.data });
     
   } catch(e) {
     
     if(axios.isAxiosError(e)) {
-      // console.log('e.response: ', e.response);
       if(e.response?.status === 404) return res.status(404).json({ error: `Cannot find notes with selected filters` });
     }
 
@@ -96,13 +101,15 @@ export const insert = async (req: Request, res: Response) => {
 
   validate(req);
 
+  console.log('req.body: ', req.body);
+
   let { title, content, tags = [] } = req.body;
 
   if(!title || !content) res.status(400).json({ error: 'Title and Content are mandatory' });
 
   try {
 
-    let response = await javaClient.post('/notes', { title, content, tags });
+    let response = await javaClient.put('/notes', { title, content, tags });
 
     return res.status(201).json({ note: response.data });
 
@@ -230,4 +237,17 @@ const validate = (req: Request) => {
 
     if(isNaN(numId)) new Error('Invalid id NaN');
   }
+}
+
+const parseNoteFilters = (req: Request): NoteFilters => {
+  let { content, ids, tag, title } = req.body;
+
+  let filters: NoteFilters = {};
+
+  if(typeof content === 'string') filters.content = content;
+  if(typeof tag === 'string') filters.tag = tag;
+  if(typeof title === 'string') filters.title = title;
+  if(Array.isArray(ids) && ids.every(id => typeof id === 'number')) filters.ids = ids;
+
+  return filters;
 }

@@ -5,7 +5,9 @@ import com.notes.backend_java.repository.NoteRepository;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 
 @RestController
@@ -20,27 +22,55 @@ public class NoteController {
 
   // GET /notes/:id - getOne
   @GetMapping("/{id}")
-  public Note getOne(@PathVariable Long id) {
+  public Note getNote(@PathVariable Long id) {
       return noteRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Note not found"));
   }
 
   // GET /notes/filters - getMany
   @GetMapping
-  public List<Note> getMany(
+  public List<Note> getNotes(
+    @RequestParam(required = false) String content,
+    @RequestParam(required = false) String ids,
     @RequestParam(required = false) String title,
     @RequestParam(required = false) String tag) {
 
-    if(title != null && tag != null) {
-      return noteRepository.findByTitleContainingAndTagsContaining(title, tag);
+    System.out.println(ids);
+
+    if(ids != null && !ids.isEmpty()) {
+      List<Long> idsList = Arrays.stream(ids.split(","))
+                            .map(Long::parseLong)
+                            .collect(Collectors.toList());
+
+      return noteRepository.findAllById(idsList);
     }
 
-    if(title != null) {
-      return noteRepository.findByTitleContaining(title);
+    if(content != null && tag != null) {
+      return noteRepository.findByContentAndTags(content, tag);
+    }
+    
+    if(content != null && title != null) {
+      return noteRepository.findByContentAndTitle(content, title);
+    }
+
+    if(tag != null && title != null) {
+      return noteRepository.findByTagsAndTitle(tag, title);
+    }
+
+    if(content != null & tag != null && title != null) {
+      return noteRepository.findByContentAndTagsAndTitle(content, tag, title);
+    }
+
+    if(content != null) {
+      return noteRepository.findByContent(content);
     }
 
     if(tag != null) {
-      return noteRepository.findByTagsContaining(tag);
+      return noteRepository.findByTags(tag);
+    }
+
+    if(title != null) {
+      return noteRepository.findByTitle(title);
     }
 
     return noteRepository.findAll();

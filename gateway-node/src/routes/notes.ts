@@ -3,8 +3,8 @@ import * as notesController from '../controllers/notesController.js';
 
 const notesRouter = express.Router();
 
-notesRouter.get('/filter', notesController.getMany);
 notesRouter.get('/:id', notesController.getOne);
+notesRouter.post('/', notesController.getMany);
 notesRouter.get('/', notesController.getAll);
 
 // insert recebe nota pelo body
