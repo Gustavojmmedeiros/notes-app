@@ -4,6 +4,8 @@ import type { NoteFilters } from '../types/index.js';
 export const parseId = (req: Request) => {
   let { id } = req.params;
 
+  // if(isNaN(id)) return res.
+
   return parseInt(id as string);
 }
 
