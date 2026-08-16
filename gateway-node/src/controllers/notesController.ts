@@ -4,9 +4,6 @@ import { parseId } from '../utils/fn.js';
 import { javaClient } from '../services/javaClient.js';
 import axios from 'axios';
 
-// Simulação de banco em memória (temporário)
-let notes: Note[] = [];
-
 // '/:id'
 export const getOne = async (req: Request, res: Response) => {
 
@@ -79,8 +76,6 @@ export const getMany = async (req: Request, res: Response) => {
 // '/'
 export const getAll = async (req: Request, res: Response) => {
 
-  console.log('getAll');
-  // console.log('req: ', req);
   validate(req);
 
   try {
@@ -98,6 +93,7 @@ export const getAll = async (req: Request, res: Response) => {
 
 // 'body'
 export const insert = async (req: Request, res: Response) => {
+  console.log('Insert do gateway chamado: ', req.body);
 
   validate(req);
 
@@ -110,6 +106,8 @@ export const insert = async (req: Request, res: Response) => {
   try {
 
     let response = await javaClient.post('/notes', { title, content, tags });
+
+    console.log('Insert do gateway, response: ', response);
 
     return res.status(201).json({ note: response.data });
 
