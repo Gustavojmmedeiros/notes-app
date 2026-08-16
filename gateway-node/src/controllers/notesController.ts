@@ -4,9 +4,6 @@ import { parseId } from '../utils/fn.js';
 import { javaClient } from '../services/javaClient.js';
 import axios from 'axios';
 
-// Simulação de banco em memória (temporário)
-let notes: Note[] = [];
-
 // '/:id'
 export const getOne = async (req: Request, res: Response) => {
 
@@ -79,8 +76,6 @@ export const getMany = async (req: Request, res: Response) => {
 // '/'
 export const getAll = async (req: Request, res: Response) => {
 
-  console.log('getAll');
-  // console.log('req: ', req);
   validate(req);
 
   try {
@@ -98,6 +93,7 @@ export const getAll = async (req: Request, res: Response) => {
 
 // 'body'
 export const insert = async (req: Request, res: Response) => {
+  console.log('Insert do gateway chamado: ', req.body);
 
   validate(req);
 
@@ -109,7 +105,9 @@ export const insert = async (req: Request, res: Response) => {
 
   try {
 
-    let response = await javaClient.put('/notes', { title, content, tags });
+    let response = await javaClient.post('/notes', { title, content, tags });
+
+    console.log('Insert do gateway, response: ', response);
 
     return res.status(201).json({ note: response.data });
 
@@ -127,101 +125,147 @@ export const insert = async (req: Request, res: Response) => {
 }
 
 // '/:id' or 'body'
-export const update = (req: Request, res: Response) => {
+export const update = async (req: Request, res: Response) => {
 
   validate(req);
 
-  let notesToUpdate: Note[] = [];
+  let { content, tags, title } = req.body, 
+      updateData: any  = {},
+      response;
+
+  if(content !== undefined) updateData.content = content;
+  if(tags !== undefined) updateData.tags = tags;
+  if(title !== undefined) updateData.title = title;
 
   // updateMany /api/notes/
   if(req.body?.ids) {
 
     let { ids } = req.body;
 
+    updateData.ids = ids;
+
     if(!Array.isArray(ids) || ids.length === 0) res.status(400).json({ error: 'Invalid ids' });
 
-    for(const id of ids) {
+    try {
 
-      let note = notes.find(n => n.id === id);
+      if(!updateData.ids) res.status(500).json({ error: 'Ids must not be null' });
 
-      if(!note) return res.status(404).json({ error: `Note with id ${id} does not exist` });
+      response = await javaClient.patch('/notes', updateData);
 
-      notesToUpdate.push(note);
+      res.json({ result: response.data });
+      // res.json({ result: response.data.ids }); retornar os ids atualizados
+
+    } catch(e) {
+
+      if(axios.isAxiosError(e)) {
+        if(e.response) {
+          return res.status(e.response.status).json(e.response.data);}
+      }
+
+      if(e instanceof Error && e.message.includes('ECONNREFUSED')) return res.status(503).json({ error: 'Notes service unavailable' });
+
+      return res.status(500).json({ error: 'Error updating notes' }); 
     }
 
     // updateOne /api/notes/:id
-  } else if(req?.params && req.body.id) {
+  } else if(req?.params) {
 
-    let id = parseId(req), // id da nota
-      note = notes.find(n => n.id === id); //
+    let id = parseId(req);
 
-    if(!note) return res.status(404).json({ error: 'Note does not exist' });
+    if(isNaN(id)) return res.status(400).json({ error: 'Invalid id' });
 
-    notesToUpdate.push(note);
+    try {
 
-  } else {
+      response = await javaClient.patch(`/notes/${id}`, updateData);
 
-    return res.status(400).json({ error: 'Invalid request for remove' });
+      res.json({ result: response.data });
+      // res.json({ result: response.data.ids }); retornar o id atualizado?
+
+    } catch(e) {
+
+      if(axios.isAxiosError(e)) {
+        if(e.response) return res.status(e.response.data).json(e.response.data);
+      }
+
+      if(e instanceof Error && e.message.includes('ECONNREFUSED')) return res.status(503).json({ error: 'Notes service unavailable' });
+
+      return res.status(500).json({ error: 'Error updating note' });
+    }
+
   }
-
-  let { title, content, tags = [] } = req.body; // campos a atualizar individualmente (opcionais)
-
-  // TODO: se não tiver nada pra atualizar, não faz nada
-  if(!title && !content && !tags) return res.status(400).json({ error: 'Nothing to update' });
-
-  for(const note of notesToUpdate) {
-    note.title     = title ?? note.title;
-    note.content   = content ?? note.content;
-    note.tags      = tags ?? note.tags;
-    note.updatedAt = new Date().toISOString();
-  }
-
-  return res.status(200).json({ result: notesToUpdate });
-
 }
 
 
 // '/:id' or 'body'
-export const remove = (req: Request, res: Response) => {
+export const remove = async (req: Request, res: Response) => {
 
   validate(req);
 
-  let idsToRemove: number[] = [],
-      notesLength           = notes.length;
+  let response;
 
   // removeMany /api/notes/
   if(req?.body?.ids) {
+    console.log('removeMany - req.body: ', req.body);
 
     let { ids } = req.body;
 
     if(!Array.isArray(ids) || ids.length === 0) res.status(400).json({ error: 'Invalid ids' });
 
-    idsToRemove = ids;
+    try {
+
+      response = await javaClient.delete('/notes', { data: { ids } });
+
+      return res.json({ result: response.data });
+
+    } catch(e) {
+
+      if(axios.isAxiosError(e)) {
+        if(e.response) return res.status(e.response.data).json(e.response.data);
+      }
+
+      if(e instanceof Error && e.message.includes('ECONNREFUSED')) return res.status(503).json({ error: 'Notes service unavailable' });
+
+      return res.status(500).json({ error: 'Error removing note' });
+    }
 
     // removeOne /api/notes/:id
   } else if(req?.params?.id) {
+    console.log('removeOne - req.params: ', req.params);
 
     let id = parseId(req);
   
     if(!id) return res.status(404).json({ error: 'Note not found' });
-  
-    idsToRemove = [id];
+
+    try {
+
+      response = await javaClient.delete(`/notes/${id}`);
+      
+      return res.json({ result: response.data });
+
+    } catch(e) {
+
+      if(axios.isAxiosError(e)) {
+        if(e.response) return res.status(e.response.data).json(e.response.data);
+      }
+
+      if(e instanceof Error && e.message.includes('ECONNREFUSED')) return res.status(503).json({ error: 'Notes service unavailable' });
+
+      return res.status(500).json({ error: 'Error removing note' });
+    }
     
   } else {
     
     return res.status(400).json({ error: 'Invalid request for remove' });
   }
-  
-  notes = notes.filter(n => !idsToRemove.includes(n.id));
+  // notes = notes.filter(n => !idsToRemove.includes(n.id));
 
-  if(notes.length === notesLength) {
-    return res.status(404).json({ error: 'Unable to remove notes' });
+  // if(notes.length === notesLength) {
+  //   return res.status(404).json({ error: 'Unable to remove notes' });
 
-  } else if(notes.length === (notesLength - idsToRemove.length)) {
-    return res.status(200).json({ result: idsToRemove });
+  // } else if(notes.length === (notesLength - idsToRemove.length)) {
+  //   return res.status(200).json({ result: idsToRemove });
 
-  }
-  
+  // }
 }
 
 // Helper Function

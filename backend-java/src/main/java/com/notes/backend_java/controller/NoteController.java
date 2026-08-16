@@ -1,7 +1,10 @@
 package com.notes.backend_java.controller;
 
+import com.notes.backend_java.dto.NoteRequest;
 import com.notes.backend_java.model.Note;
 import com.notes.backend_java.repository.NoteRepository;
+import com.notes.backend_java.service.NoteService;
+
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -13,18 +16,18 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/notes")
 public class NoteController {
-  
-  private final NoteRepository noteRepository;
 
-  public NoteController(NoteRepository noteRepository) {
-    this.noteRepository = noteRepository;
+  private final NoteService noteService;
+
+  public NoteController(NoteService noteService) {
+    this.noteService = noteService;
   }
+
 
   // GET /notes/:id - getOne
   @GetMapping("/{id}")
   public Note getNote(@PathVariable Long id) {
-      return noteRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Note not found"));
+      return noteService.getOne(id);
   }
 
   // GET /notes/filters - getMany
@@ -35,53 +38,82 @@ public class NoteController {
     @RequestParam(required = false) String title,
     @RequestParam(required = false) String tag) {
 
-    System.out.println(ids);
-
     if(ids != null && !ids.isEmpty()) {
       List<Long> idsList = Arrays.stream(ids.split(","))
                             .map(Long::parseLong)
                             .collect(Collectors.toList());
 
-      return noteRepository.findAllById(idsList);
+      return noteService.getNotesByIds(idsList);
     }
 
     if(content != null && tag != null) {
-      return noteRepository.findByContentAndTags(content, tag);
+      // return noteRepository.findByContentAndTags(content, tag);
+      return noteService.findByContentAndTags(content, tag);
     }
     
     if(content != null && title != null) {
-      return noteRepository.findByContentAndTitle(content, title);
+      // return noteRepository.findByContentAndTitle(content, title);
+      return noteService.findByContentAndTitle(content, title);
     }
 
     if(tag != null && title != null) {
-      return noteRepository.findByTagsAndTitle(tag, title);
+      return noteService.findByTagsAndTitle(tag, title);
     }
 
     if(content != null & tag != null && title != null) {
-      return noteRepository.findByContentAndTagsAndTitle(content, tag, title);
+      return noteService.findByContentAndTagsAndTitle(content, tag, title);
     }
 
     if(content != null) {
-      return noteRepository.findByContent(content);
+      return noteService.findByContent(content);
     }
 
     if(tag != null) {
-      return noteRepository.findByTags(tag);
+      return noteService.findByTags(tag);
     }
 
     if(title != null) {
-      return noteRepository.findByTitle(title);
+      return noteService.findByTitle(title);
     }
 
-    return noteRepository.findAll();
+    return noteService.getAll();
   }
   
   // POST /notes - insert
   @PostMapping
   public Note insert(@RequestBody Note note) {
-    note.setCreatedAt(LocalDateTime.now());
-    note.setUpdatedAt(LocalDateTime.now());
 
-    return noteRepository.save(note);
+    return noteService.insert(note);
+  }
+
+  @PatchMapping("/{id}")
+  public Note updateOne(@PathVariable Long id, @RequestBody Note note) {
+    return noteService.updateOne(
+      note.getContent(),
+      id,
+      note.getTags(),
+      note.getTitle()
+    );
+  }
+
+  @PatchMapping
+  public int updateMany(@RequestBody NoteRequest request) {
+
+    return noteService.updateMany(
+      request.getIds(),
+      request.getContent(),
+      request.getTags(),
+      request.getTitle()
+    );
+  }
+
+  @DeleteMapping("/{id}")
+  public void deleteOne(@PathVariable Long id) {
+    noteService.deleteOne(id);
+  }
+
+  @DeleteMapping
+  public void deleteMany(@RequestBody NoteRequest request) {
+    noteService.deleteMany(request.getIds());
   }
 }
