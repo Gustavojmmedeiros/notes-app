@@ -1,6 +1,6 @@
-import './components.css';
-import { Link } from 'react-router-dom';
+import '../styles/components.css';
 import { Note } from '../types';
+import { EditNote } from './Button';
 
 interface NoteCardProps {
   note: Note;
@@ -9,16 +9,20 @@ interface NoteCardProps {
 const NoteCard = ({ note }: NoteCardProps) => {
   return (
     <div className='div-NoteCard'>
-      <h3>{note.title}</h3>
-      <p>{note.content}</p>
-      <div>
+      <div className='div-NoteCardContent'>
+        <h3>{note.title}</h3>
+        <p>{note.content}</p>
+      </div>
+      <div className='div-NoteCardTags'>
+        Tags: 
         {note.tags.map((tag, index) => (
-          <span key={index} style={{ background: '#eee', padding: '4px 8px', marginRight: '4px' }}>
+          <span key={index}>
             {tag}
           </span>
         ))}
       </div>
-      <Link to={`/notes/${note.id}`}>Edit Note</Link>
+      {/* <Link to={`/notes/${note.id}`}>Edit Note</Link> */}
+      <EditNote id={note.id}/>
     </div>
   );
 };

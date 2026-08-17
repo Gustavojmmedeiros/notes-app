@@ -2,7 +2,6 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Home from './pages/Home';
 import NewNote from './pages/NewNote';
 import Note from './pages/Note';
-import './App.css';
 
 function App() {
   return (
