@@ -1,25 +1,24 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { createNote } from '../api/notes';
 import NoteForm from '../components/NewNoteForm'
-import BackButton from '../components/Button';
+// import BackButton from '../components/Button';
+import { BackButton } from '../components/Button';
+import { useNotes } from '../hooks/useNotes';
 
 const NewNote = () => {
   const navigate = useNavigate();
+  const { fetchNotes } = useNotes();
 
   const handleSubmit = async (data: { title: string, content: string, tags: string[] }) => {
-
-    console.log('title: ', data.title);
-    console.log('content: ', data.content);
-    console.log('tags: ', data.tags);
-    
+  // const handleSubmit = async (data) => {  
     try {
       await createNote(data);
+      await fetchNotes();
 
       navigate('/');
 
     } catch(error) {
 
-      console.log('Erro criando nota: ', error);
       alert('Error creating note');
 
     }

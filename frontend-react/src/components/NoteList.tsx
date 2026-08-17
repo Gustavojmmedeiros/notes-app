@@ -1,33 +1,35 @@
-import './components.css';
+import '../styles/components.css';
 import { useEffect, useState } from 'react';
 import { getNotes } from '../api/notes';
 import { Note } from '../types';
 import NoteCard from './NoteCard';
+import { useNotes } from '../hooks/useNotes';
 
 const NoteList = () => {
-  const [notes, setNotes] = useState<Note[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { notes, loading } = useNotes();
+  // const [notes, setNotes] = useState<Note[]>([]);
+  // const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchNotes = async () => {
+  // useEffect(() => {
+  //   const fetchNotes = async () => {
 
-      try {
-        const response = await getNotes();
+  //     try {
+  //       const response = await getNotes();
 
-        setNotes(response.data.notes);
+  //       setNotes(response.data.notes);
 
-      } catch(e) {
-        console.log('Erro ao buscar notas: ', e);
+  //     } catch(e) {
+  //       console.log('Erro ao buscar notas: ', e);
 
-      } finally {
-        setLoading(false);
+  //     } finally {
+  //       setLoading(false);
 
-      }
-    };
+  //     }
+  //   };
 
-    fetchNotes();
+  //   fetchNotes();
 
-  }, []);
+  // }, []);
 
   if(loading) return <p>Loading...</p>
 

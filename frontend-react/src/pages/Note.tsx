@@ -1,9 +1,9 @@
-import '../components/components.css';
+import '../styles/components.css';
 import { useEffect, useState } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { getNoteById, updateNote } from '../api/notes';
 import { Note as NoteType } from '../types';
-import BackButton from '../components/Button';
+import { BackButton } from '../components/Button';
 import NoteForm from '../components/NewNoteForm';
 
 const Note = () => {
@@ -81,7 +81,7 @@ const Note = () => {
           <div>
             Tags:
             {note.tags.map((tag, index) => (
-              <span key={index} className="div-NoteCard">
+              <span key={index}>
                 {tag}
               </span>
             ))}

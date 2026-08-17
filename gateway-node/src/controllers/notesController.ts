@@ -7,7 +7,6 @@ import axios from 'axios';
 // '/:id'
 export const getOne = async (req: Request, res: Response) => {
 
-  console.log('getOne');
   validate(req);
 
   let id = parseId(req);
@@ -76,6 +75,8 @@ export const getMany = async (req: Request, res: Response) => {
 // '/'
 export const getAll = async (req: Request, res: Response) => {
 
+  console.log('getAll');
+  
   validate(req);
 
   try {
@@ -93,7 +94,6 @@ export const getAll = async (req: Request, res: Response) => {
 
 // 'body'
 export const insert = async (req: Request, res: Response) => {
-  console.log('Insert do gateway chamado: ', req.body);
 
   validate(req);
 
@@ -230,7 +230,6 @@ export const remove = async (req: Request, res: Response) => {
 
     // removeOne /api/notes/:id
   } else if(req?.params?.id) {
-    console.log('removeOne - req.params: ', req.params);
 
     let id = parseId(req);
   
