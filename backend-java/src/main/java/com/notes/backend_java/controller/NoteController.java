@@ -30,6 +30,11 @@ public class NoteController {
       return noteService.getOne(id);
   }
 
+  // @GetMapping
+  // public List<Note> getAllNotes() {
+  //   return noteService.getAllOrderedByUpdatedAt();
+  // }
+
   // GET /notes/filters - getMany
   @GetMapping
   public List<Note> getNotes(
@@ -37,6 +42,15 @@ public class NoteController {
     @RequestParam(required = false) String ids,
     @RequestParam(required = false) String title,
     @RequestParam(required = false) String tag) {
+
+      if(
+        content == null && 
+        ids     == null &&
+        title   == null &&
+        tag     == null
+      ) {
+        return noteService.getAllOrderedByUpdatedAt();
+      }
 
     if(ids != null && !ids.isEmpty()) {
       List<Long> idsList = Arrays.stream(ids.split(","))

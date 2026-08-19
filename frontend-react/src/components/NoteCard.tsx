@@ -1,12 +1,14 @@
 import '../styles/components.css';
 import { Note } from '../types';
-import { EditNote } from './Button';
+import { EditNoteButton } from './Button';
 
 interface NoteCardProps {
   note: Note;
+  // to: string;
 }
 
 const NoteCard = ({ note }: NoteCardProps) => {
+
   return (
     <div className='div-NoteCard'>
       <div className='div-NoteCardContent'>
@@ -16,13 +18,12 @@ const NoteCard = ({ note }: NoteCardProps) => {
       <div className='div-NoteCardTags'>
         Tags: 
         {note.tags.map((tag, index) => (
-          <span key={index}>
+          <span key={index} className='tag'>
             {tag}
           </span>
         ))}
       </div>
-      {/* <Link to={`/notes/${note.id}`}>Edit Note</Link> */}
-      <EditNote id={note.id}/>
+      <EditNoteButton id={note.id} />
     </div>
   );
 };

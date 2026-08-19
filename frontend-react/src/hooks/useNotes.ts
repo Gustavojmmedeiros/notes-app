@@ -6,8 +6,8 @@ export const useNotes = () => {
   const [notes, setNotes] = useState<Note[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchNotes = async () => {
     const fetchNotes = async () => {
+      setLoading(true);
 
       try {
         const response = await getNotes();
@@ -26,7 +26,6 @@ export const useNotes = () => {
     useEffect(() => {
       fetchNotes();
     }, []);
-  }
 
   return { notes, loading, fetchNotes };
 }

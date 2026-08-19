@@ -21,6 +21,10 @@ public class NoteService {
     return noteRepository.findAll();
   }
 
+  public List<Note> getAllOrderedByUpdatedAt() {
+    return noteRepository.findAllByOrderByUpdatedAtDesc();
+  }
+
   public Note getOne(Long id) {
     return noteRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Note not found"));

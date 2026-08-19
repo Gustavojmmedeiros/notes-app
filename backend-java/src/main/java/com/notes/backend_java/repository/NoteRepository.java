@@ -16,4 +16,5 @@ public interface NoteRepository extends JpaRepository<Note, Long> {
   List<Note> findByTagsAndTitle(String tags, String title);
   List<Note> findByContentAndTagsAndTitle(String content, String tags, 
     String title);
+  List<Note> findAllByOrderByUpdatedAtDesc();
 }
