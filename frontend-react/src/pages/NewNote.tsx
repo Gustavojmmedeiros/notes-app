@@ -1,7 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { createNote } from '../api/notes';
-import NoteForm from '../components/NewNoteForm'
-// import BackButton from '../components/Button';
+import NoteForm from '../components/NoteForm'
 import { BackButton } from '../components/Button';
 import { useNotes } from '../hooks/useNotes';
 
@@ -10,12 +9,12 @@ const NewNote = () => {
   const { fetchNotes } = useNotes();
 
   const handleSubmit = async (data: { title: string, content: string, tags: string[] }) => {
-  // const handleSubmit = async (data) => {  
+  
     try {
       await createNote(data);
       await fetchNotes();
 
-      navigate('/');
+      navigate('/', { state: { refresh: true } });
 
     } catch(error) {
 

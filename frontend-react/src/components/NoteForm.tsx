@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
+import { BackButton } from './Button';
 
 interface NoteFormProps {
   initialData?: {
     title: string;
     content: string;
     tags: string[];
-  };
+  } | null;
 
   onSubmit: (data: { title: string; content: string; tags: string[] }) => void;
 
@@ -16,8 +17,6 @@ const NoteForm = ({ initialData, onSubmit, submitLabel }: NoteFormProps) => {
   const [title, setTitle] = useState(initialData?.title || '');
   const [content, setContent] = useState(initialData?.content || '');
   const [tags, setTags] = useState(initialData?.tags?.join(', ') || '');
-
-  console.log('NoteForm');
 
   const handleSubmit = (e: React.SubmitEvent) => {
     e.preventDefault();

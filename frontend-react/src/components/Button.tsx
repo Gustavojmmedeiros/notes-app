@@ -11,11 +11,17 @@ interface EditNoteButtonProps {
   id: number;
   variant?: 'primary' | 'secondary' | 'danger';
   children?: React.ReactNode;
+  className?: string;
 }
 
-export const LinkButton = ({ to, children, variant = 'primary', className = '' }: LinkButtonProps) => {
+export const LinkButton = ({ 
+  to, 
+  children, 
+  variant, 
+  className = '' 
+}: LinkButtonProps) => {
 
-  const variantClass = `link-button-${variant}`;
+  const variantClass = variant ? `link-button-${variant}` : '';
 
   return (
     <Link to={to} className={`link-button ${variantClass} ${className}`}>{children}</Link>
@@ -27,12 +33,17 @@ export const BackButton = () => (
 );
 
 export const NewNoteButton = () => (
-  <LinkButton to="/notes/new">+</LinkButton>
+  <LinkButton to="/notes/new" variant="primary">+</LinkButton>
 );
 
-export const EditNote = ({ id, variant = 'secondary', children = 'Edit' }: EditNoteButtonProps) => {
+export const EditNoteButton = ({ 
+  id, 
+  children = 'Edit'
+}: EditNoteButtonProps) => {
   
   return (
-    <LinkButton to={`/notes/${id}`} variant={variant}>{children}</LinkButton>
+    <LinkButton to={`/notes/${id}`} className={`note-link`}>
+      {children}
+    </LinkButton>
   );
 };

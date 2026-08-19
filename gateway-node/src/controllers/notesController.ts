@@ -74,8 +74,6 @@ export const getMany = async (req: Request, res: Response) => {
 
 // '/'
 export const getAll = async (req: Request, res: Response) => {
-
-  console.log('getAll');
   
   validate(req);
 
