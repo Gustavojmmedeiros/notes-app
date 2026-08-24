@@ -1,16 +1,18 @@
-import '../styles/components.css';
 import NoteCard from './NoteCard';
-import { useNotes } from '../hooks/useNotes';
+import { Note } from '../types/index';
 
-const NoteList = () => {
-  const { notes, loading } = useNotes();
+interface NoteListProps {
+  notes: Note[];
+  loading: boolean;
+}
 
-  if(loading) return <p>Loading...</p>
+const NoteList = ({ notes, loading }: NoteListProps) => {
 
-  if(notes.length === 0) return <p>No notes found</p>
+  if (loading) return <p>Loading...</p>;
+  if (notes.length === 0) return <p>No notes found</p>;
 
   return (
-    <div className='div-NoteList'>
+    <div className="div-NoteList">
       {notes.map((note) => (
         <NoteCard key={note.id} note={note} />
       ))}

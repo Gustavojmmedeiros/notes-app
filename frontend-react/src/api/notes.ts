@@ -6,7 +6,7 @@ export const getNotes = () => axios.get(API_BASE);
 
 export const createNote = (data: any) => {
   console.log('Chamando createNote: ', API_BASE, data);
-  axios.put(API_BASE, data);
+  return axios.put(API_BASE, data);
 }
 
 export const getNoteById = (id: number) => axios.get(`${API_BASE}/${id}`);

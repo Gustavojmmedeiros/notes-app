@@ -8,7 +8,6 @@
   padding: 16px;
   color: #fff;
   display: flex;
-  
   flex-direction: column;
   justify-content: space-between;
   height: 180px;
@@ -46,8 +45,6 @@
 
 .div-NoteCardTags {
   display: flex;
-  /* flex-direction: row; */
-  /* justify-content: flex-start; */
   flex-wrap: wrap;
   border: 1px solid rgba(255, 255, 255, 0.9);
   border-radius: 15px;
@@ -128,4 +125,40 @@
 
 .link-button-secondary:hover {
   color: #83402b;
+}
+
+.div-NoteForm {
+  display: grid;
+}
+
+.noteForm-label {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color:#83402b;
+}
+
+.input-title {
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  border-radius: 4px;
+  /* margin-left: 4px; */
+  /* margin-bottom: 6px; */
+  margin: 4px 0 12px 0;
+  padding: 4px;
+}
+
+.textarea-content {
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  border-radius: 4px;
+  /* margin-left: 4px; */
+  /* margin-bottom: 6px; */
+  margin: 4px 0 12px 0;
+  padding: 4px;
+}
+
+.input-tags {
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  border-radius: 4px;
+  /* margin-left: 4px; */
+  /* margin-bottom: 12px; */
+  margin: 4px 0 12px 0;
+  padding: 4px;
 }

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BackButton } from './Button';
+// import { CreateNoteButton } from './Button';
 
 interface NoteFormProps {
   initialData?: {
@@ -27,38 +27,45 @@ const NoteForm = ({ initialData, onSubmit, submitLabel }: NoteFormProps) => {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <div>
-        <label>Título</label>
-        <input 
-          style={{ marginLeft: '4px', marginBottom: '6px' }}
-          type="text" 
-          value={title} 
-          onChange={(e) => setTitle(e.target.value)} 
-          required
-        />
-      </div>
-      <div>
-        <label>Conteúdo</label>
-        <textarea 
-          style={{ marginLeft: '4px', marginBottom: '6px' }}
-          value={content} 
-          onChange={(e) => setContent(e.target.value)} 
-          required
-        />
-      </div>
-      <div>
-        <label>Tags</label>
-        <input 
-          style={{ marginLeft: '4px', marginBottom: '6px' }}
-          type="text" 
-          value={tags} 
-          onChange={(e) => setTags(e.target.value)} 
-          placeholder="ex: trabalho, projeto, urgente"
-        />
-      </div>
-      <button type="submit">{submitLabel}</button>
-    </form>
+    <div className='div-NoteForm'>
+      <form onSubmit={handleSubmit}>
+        <div>
+          <label className='noteForm-label'>Título</label>
+          <input 
+            // style={{ marginLeft: '4px', marginBottom: '6px' }}
+            className='input-title'
+            type="text" 
+            value={title} 
+            onChange={(e) => setTitle(e.target.value)} 
+            required
+          />
+        </div>
+        <div>
+          <label className='noteForm-label'>Conteúdo</label>
+          <textarea 
+            // style={{ marginLeft: '4px', marginBottom: '6px' }}
+            className='textarea-content'
+            value={content} 
+            rows={5}
+            onChange={(e) => setContent(e.target.value)} 
+            required
+          />
+        </div>
+        <div>
+          <label className='noteForm-label'>Tags</label>
+          <input 
+            // style={{ marginLeft: '4px', marginBottom: '6px' }}
+            className='input-tags'
+            type="text" 
+            value={tags} 
+            onChange={(e) => setTags(e.target.value)} 
+            placeholder="ex: trabalho, projeto, urgente"
+          />
+        </div>
+        <button type="submit">{submitLabel}</button>
+        {/* <CreateNoteButton action='submit' /> */}
+      </form>
+    </div>
   );
 };
 
