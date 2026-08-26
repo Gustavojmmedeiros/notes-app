@@ -2,19 +2,26 @@ import { useNavigate } from 'react-router-dom';
 import { createNote } from '../api/notes';
 import NoteForm from '../components/NoteForm'
 import { BackButton } from '../components/Button';
-import { useNotes } from '../hooks/useNotes';
+import { Note } from '../types/index';
 
-const NewNote = () => {
+interface NewNoteProps {
+  setNotes: React.Dispatch<React.SetStateAction<Note[]>>;
+}
+
+const NewNote = ({ setNotes }: NewNoteProps) => {
+
   const navigate = useNavigate();
-  const { fetchNotes } = useNotes();
 
   const handleSubmit = async (data: { title: string, content: string, tags: string[] }) => {
   
     try {
-      await createNote(data);
-      await fetchNotes();
+      
+      const response = await createNote(data);
+      const newNote = response.data.note;
 
-      navigate('/', { state: { refresh: true } });
+      setNotes((prev) => [ newNote, ...prev]);
+
+      navigate('/');
 
     } catch(error) {
 

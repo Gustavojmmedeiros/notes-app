@@ -2,9 +2,13 @@ import { Link } from "react-router-dom";
 
 interface LinkButtonProps {
   to: string;
-  children: React.ReactNode;
   variant?: 'primary' | 'secondary' | 'danger';
+  children: React.ReactNode;
   className?: string;
+}
+
+interface CreateNoteButtonProps {
+  action: 'submit';
 }
 
 interface EditNoteButtonProps {
@@ -47,3 +51,12 @@ export const EditNoteButton = ({
     </LinkButton>
   );
 };
+
+// export const CreateNoteButton = ({
+//   action = 'submit'
+// }: CreateNoteButtonProps) => {
+  
+//   return (
+//     <LinkButton to="../" variant="secondary">Criar Nota</LinkButton>
+//   )
+// };
