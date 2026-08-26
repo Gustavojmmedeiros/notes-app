@@ -1,14 +1,10 @@
-<div align="center">
-
 # Notes App
 
 > Full-stack note-taking application built with a **microservices architecture**, featuring a React frontend, a Node.js gateway and a Java Spring Boot backend with PostgreSQL.
 
 Notes App lets you organize your thoughts, ideas, reminders, so you can access it later in one place. Create notes, attach tags to them, so to make your workspace organized.
 
-**This is personal project, for personal edification purposes only. Be nice.**
-
-</div>
+**This is a personal project, for personal edification purposes only. Be nice.**
 
 ## ✨ Key Features
 - **Create, edit and delete notes** with title, content and associated tags
