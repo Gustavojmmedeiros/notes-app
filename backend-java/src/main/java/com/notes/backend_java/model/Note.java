@@ -19,8 +19,16 @@ public class Note {
   @Column(nullable = false, columnDefinition = "TEXT")
   private String content;
 
-  @ElementCollection
-  private List<String> tags = new ArrayList<>();
+  // @ElementCollection
+  // private List<String> tags = new ArrayList<>();
+
+  @ManyToMany
+  @JoinTable(
+    name = "note_tags",
+    joinColumns = @JoinColumn(name = "note_id"),
+    inverseJoinColumns = @JoinColumn(name = "tag_id")
+  )
+  private List<Tag> tags = new ArrayList<>();
 
   @Column(name = "created_at", nullable = false, updatable = false)
   private LocalDateTime createdAt;
@@ -28,6 +36,7 @@ public class Note {
   @Column(name = "updated_at")
   private LocalDateTime updatedAt;
 
+  public Note() {}
   
   public Long getId() {
     return id;
@@ -53,11 +62,11 @@ public class Note {
     this.content = content;
   }
 
-  public List<String> getTags() {
+  public List<Tag> getTags() {
     return tags;
   }
 
-  public void setTags(List<String> tags) {
+  public void setTags(List<Tag> tags) {
     this.tags = tags;
   }
 

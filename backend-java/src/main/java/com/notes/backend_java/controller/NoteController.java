@@ -2,16 +2,15 @@ package com.notes.backend_java.controller;
 
 import com.notes.backend_java.dto.NoteRequest;
 import com.notes.backend_java.model.Note;
-import com.notes.backend_java.repository.NoteRepository;
 import com.notes.backend_java.service.NoteService;
-
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
-
 
 @RestController
 @RequestMapping("/notes")
@@ -23,25 +22,19 @@ public class NoteController {
     this.noteService = noteService;
   }
 
-
   // GET /notes/:id - getOne
   @GetMapping("/{id}")
   public Note getNote(@PathVariable Long id) {
       return noteService.getOne(id);
   }
 
-  // @GetMapping
-  // public List<Note> getAllNotes() {
-  //   return noteService.getAllOrderedByUpdatedAt();
-  // }
-
   // GET /notes/filters - getMany
   @GetMapping
   public List<Note> getNotes(
     @RequestParam(required = false) String content,
-    @RequestParam(required = false) String ids,
     @RequestParam(required = false) String title,
-    @RequestParam(required = false) String tag) {
+    @RequestParam(required = false) String tag,
+    @RequestParam(required = false) String ids) {
 
       if(
         content == null && 
@@ -60,74 +53,64 @@ public class NoteController {
       return noteService.getNotesByIds(idsList);
     }
 
-    if(content != null && tag != null) {
-      // return noteRepository.findByContentAndTags(content, tag);
-      return noteService.findByContentAndTags(content, tag);
-    }
-    
-    if(content != null && title != null) {
-      // return noteRepository.findByContentAndTitle(content, title);
-      return noteService.findByContentAndTitle(content, title);
-    }
-
-    if(tag != null && title != null) {
-      return noteService.findByTagsAndTitle(tag, title);
-    }
-
-    if(content != null & tag != null && title != null) {
-      return noteService.findByContentAndTagsAndTitle(content, tag, title);
-    }
-
-    if(content != null) {
-      return noteService.findByContent(content);
-    }
-
-    if(tag != null) {
-      return noteService.findByTags(tag);
-    }
-
-    if(title != null) {
-      return noteService.findByTitle(title);
-    }
-
-    return noteService.getAll();
+    return noteService.filterNotes(content, tag, title);
   }
   
   // POST /notes - insert
   @PostMapping
-  public Note insert(@RequestBody Note note) {
+  @ResponseStatus(HttpStatus.CREATED)
+  public Note create(@RequestBody Note note) {
 
-    return noteService.insert(note);
+    return noteService.createNote(note);
   }
 
   @PatchMapping("/{id}")
-  public Note updateOne(@PathVariable Long id, @RequestBody Note note) {
-    return noteService.updateOne(
-      note.getContent(),
-      id,
-      note.getTags(),
-      note.getTitle()
-    );
+  public Map<String, Integer> updateOne(@PathVariable Long id, @RequestBody NoteRequest request) {
+    int updatedNote = noteService.updateOne(
+                        id,
+                        request.getContent(),
+                        request.getTitle(),
+                        request.getTagIds()
+                      );
+    
+    Map<String, Integer> response = new HashMap<>();
+    response.put("updated", updatedNote);
+
+    return response;
   }
 
   @PatchMapping
-  public int updateMany(@RequestBody NoteRequest request) {
+  public Map<String, Integer> updateMany(@RequestBody NoteRequest request) {
+    int updatedNotes = noteService.updateMany(
+                    request.getIds(),
+                    request.getContent(),
+                    request.getTitle(),
+                    request.getTagIds()
+                  );
+    
+    Map<String, Integer> response = new HashMap<>();
+    response.put("updated", updatedNotes);
 
-    return noteService.updateMany(
-      request.getIds(),
-      request.getContent(),
-      request.getTags(),
-      request.getTitle()
-    );
+    return response;
   }
 
   @DeleteMapping("/{id}")
-  public void deleteOne(@PathVariable Long id) {
-    noteService.deleteOne(id);
+  public Map<String, Boolean> deleteOne(@PathVariable Long id) {
+    noteService.deleteNote(id);
+
+    Map<String, Boolean> response = new HashMap<>();
+    response.put("deleted", true);
+
+    return response;
   }
 
   @DeleteMapping
-  public void deleteMany(@RequestBody NoteRequest request) {
-    noteService.deleteMany(request.getIds());
+  public Map<String, Integer> deleteMany(@RequestBody NoteRequest request) {
+    int deletedNotes = noteService.deleteNotes(request.getIds());
+
+    Map<String, Integer> response = new HashMap<>();
+    response.put("deleted", deletedNotes);
+
+    return response;
   }
 }
