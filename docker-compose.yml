@@ -1,0 +1,68 @@
+# version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: notesapp-postgres
+    environment:
+      POSTGRES_USER: notesappuser
+      POSTGRES_PASSWORD: notesapppass
+      POSTGRES_DB: notesappdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - notes-networks
+
+  backend:
+    build:
+      context: ./backend-java
+      dockerfile: Dockerfile
+    container_name: notesapp-backend
+    depends_on:
+      - postgres
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/notesappdb
+      SPRING_DATASOURCE_USERNAME: notesappuser
+      SPRING_DATASOURCE_PASSWORD: notesapppass
+    ports:
+      - "8080:8080"
+    networks:
+      - notes-networks
+
+  gateway:
+    build:
+      context: ./gateway-node
+      dockerfile: Dockerfile
+    container_name: notesapp-gateway
+    depends_on:
+      - backend
+    environment:
+      JAVA_API_URL: http://backend:8080
+      PORT: 3000
+    ports:
+      - "3000:3000"      
+    networks:
+      - notes-networks
+  
+  frontend:
+    build:
+      context: ./frontend-react
+      dockerfile: Dockerfile
+    container_name: notesapp-frontend
+    depends_on:
+      - gateway
+    environment:
+      VITE_API_URL: http://gateway:3000
+    ports: 
+      - "3001:3001"
+    networks:
+      - notes-networks
+
+volumes:
+  postgres_data:
+
+networks:
+  notes-networks:
+    driver: bridge
