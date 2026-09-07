@@ -29,9 +29,12 @@ public class NoteService {
     return noteRepository.findAllByOrderByUpdatedAtDesc();
   }
 
+  @Transactional
   public Note getOne(Long id) {
-    return noteRepository.findById(id)
+    Note note = noteRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Note not found"));
+
+    return note;
   }
 
   public List<Note> getNotesByIds(List<Long> ids) {
@@ -64,11 +67,17 @@ public class NoteService {
     return notes;
   }
 
+  @Transactional
   public Note createNote(Note note) {
     note.setCreatedAt(LocalDateTime.now());
     note.setUpdatedAt(LocalDateTime.now());
 
-    return noteRepository.save(note);
+    Note createdNote = noteRepository.save(note);
+
+    // Forces tags "existence"
+    createdNote.getTags().size();
+
+    return createdNote;
   }
 
   public int updateOne(Long id, String content, String title, List<Long> tagIds) {

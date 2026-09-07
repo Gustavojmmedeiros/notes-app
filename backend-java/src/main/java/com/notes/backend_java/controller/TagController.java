@@ -32,6 +32,7 @@ public class TagController {
 
     if(label != null && !label.isEmpty()) {
       return tagService.getTagByLabelContaining(label);
+
     }
  
     return tagService.getAll();
@@ -42,7 +43,7 @@ public class TagController {
   @ResponseStatus(HttpStatus.CREATED)
   public Tag create(@RequestBody Tag tag) {
 
-    //! Think about some verification
+    // Think about some verification
 
     return tagService.createTag(tag);
   }
@@ -73,7 +74,7 @@ public class TagController {
   @DeleteMapping("/{id}")
   public Map<String, Boolean> deleteTag(@PathVariable Long id) {
 
-    //! Think about some verification
+    // Think about some verification
 
     tagService.deleteTag(id);
 
@@ -87,7 +88,7 @@ public class TagController {
   @DeleteMapping
   public Map<String, Integer> deleteMany(@RequestBody TagRequest request) {
 
-    //! Think about some verification
+    // Think about some verification
 
     int deletedTags = tagService.deleteTags(request.getIds());
 

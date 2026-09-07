@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 @Entity
 @Table(name = "tags")
 public class Tag {
@@ -16,6 +18,7 @@ public class Tag {
   private String label;
 
   @ManyToMany(mappedBy = "tags")
+  @JsonIgnore
   private List<Note> notes = new ArrayList<>();
 
   public Tag() {}
