@@ -3,8 +3,11 @@ package com.notes.backend_java.service;
 import com.notes.backend_java.model.Note;
 import com.notes.backend_java.model.Tag;
 import com.notes.backend_java.repository.NoteRepository;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -32,7 +35,8 @@ public class NoteService {
   @Transactional
   public Note getOne(Long id) {
     Note note = noteRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Note not found"));
+            .orElseThrow(() -> new ResponseStatusException(
+              HttpStatus.NOT_FOUND,"Note not found"));
 
     return note;
   }
@@ -125,6 +129,10 @@ public class NoteService {
   }
 
   public void deleteNote(Long id) {
+    noteRepository.findById(id)
+            .orElseThrow(() -> new ResponseStatusException(
+              HttpStatus.NOT_FOUND,"Note not found"));
+
     noteRepository.deleteById(id);
   }
 
@@ -137,11 +145,15 @@ public class NoteService {
 
     List<Note> notes = noteRepository.findAllById(ids);
 
-    int count = notes.size();
+    if(notes.size() != ids.size()) {
+      throw new ResponseStatusException(
+        HttpStatus.NOT_FOUND, "One or more notes not found"
+      );
+    }
 
     noteRepository.deleteAll(notes);
 
-    return count;
+    return notes.size();
   }
 
   @Transactional

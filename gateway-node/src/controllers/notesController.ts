@@ -1,10 +1,10 @@
 import type { Request, Response } from 'express';
 import type { Note, NoteFilters } from '../types/index.js';
 import { parseId } from '../utils/fn.js';
+import { errorHandler } from '../utils/handleError.js';
 import { javaClient } from '../services/javaClient.js';
-import axios from 'axios';
+import { getTagsByLabels } from '../services/tagService.js';
 
-// '/:id'
 export const getOne = async (req: Request, res: Response) => {
 
   validate(req);
@@ -21,18 +21,11 @@ export const getOne = async (req: Request, res: Response) => {
 
   } catch(e) {
 
-    if(axios.isAxiosError(e)) {
-      if(e.response?.status === 404) return res.status(404).json({ error: `Cannot find note with id ${id}` })
-    }
-  
-    if(e instanceof Error && e.message.includes('ECONNREFUSED')) return res.status(503).json({ error: 'Notes service unavailable' });
-    
-    return res.status(500).json({ error: `Error fetching note with id ${id}` });
-    
+    errorHandler(e, res);
+
   }
 }
 
-// 'query'
 export const getMany = async (req: Request, res: Response) => {
 
   validate(req);
@@ -61,18 +54,11 @@ export const getMany = async (req: Request, res: Response) => {
     
   } catch(e) {
     
-    if(axios.isAxiosError(e)) {
-      if(e.response?.status === 404) return res.status(404).json({ error: `Cannot find notes with selected filters` });
-    }
-
-    if(e instanceof Error && e.message.includes('ECONNREFUSED')) return res.status(503).json({ error: 'Notes service unavailable' });
-
-    return res.status(500).json({ error: 'Error fetching notes' });
+    errorHandler(e, res);
     
   }
 }
 
-// '/'
 export const getAll = async (req: Request, res: Response) => {
   
   validate(req);
@@ -85,17 +71,14 @@ export const getAll = async (req: Request, res: Response) => {
 
   } catch(e) {
 
-    return res.status(500).json({ error: 'Error fetching notes' });
+    errorHandler(e, res);
 
   }
 }
 
-// 'body'
 export const insert = async (req: Request, res: Response) => {
 
   validate(req);
-
-  console.log('req.body: ', req.body);
 
   let { title, content, tags = [] } = req.body;
 
@@ -103,26 +86,36 @@ export const insert = async (req: Request, res: Response) => {
 
   try {
 
-    let response = await javaClient.post('/notes', { title, content, tags });
+    let formattedTags = [];
 
-    console.log('Insert do gateway, response: ', response);
+    if(tags.length > 0) {
+
+      if(typeof tags[0] === 'string') {
+        let tagIds = await getTagsByLabels(tags);
+        
+        formattedTags = tagIds.map(id => ({ id }));
+
+      } else if(typeof tags[0] === 'object' && tags[0].id) {
+        formattedTags = tags.map((t: any) => ({ id: t.id }));
+
+      } else if(typeof tags[0] === 'number') {
+        formattedTags = tags.map((id: number) => ({ id }));
+
+      }
+    }
+
+    let response = await javaClient.post('/notes', { title, content, tags: formattedTags });
+
 
     return res.status(201).json({ note: response.data });
 
   } catch(e) {
 
-    if(axios.isAxiosError(e)) {
-      if(e.response) return res.status(e.response.data).json(e.response.data);
-    }
-
-    if(e instanceof Error && e.message.includes('ECONNREFUSED')) return res.status(503).json({ error: 'Notes service unavailable' });
-
-    return res.status(500).json({ error: 'Error creating note' });
+    errorHandler(e, res);
 
   }
 }
 
-// '/:id' or 'body'
 export const update = async (req: Request, res: Response) => {
 
   validate(req);
@@ -135,7 +128,6 @@ export const update = async (req: Request, res: Response) => {
   if(tags !== undefined) updateData.tags = tags;
   if(title !== undefined) updateData.title = title;
 
-  // updateMany /api/notes/
   if(req.body?.ids) {
 
     let { ids } = req.body;
@@ -155,14 +147,7 @@ export const update = async (req: Request, res: Response) => {
 
     } catch(e) {
 
-      if(axios.isAxiosError(e)) {
-        if(e.response) {
-          return res.status(e.response.status).json(e.response.data);}
-      }
-
-      if(e instanceof Error && e.message.includes('ECONNREFUSED')) return res.status(503).json({ error: 'Notes service unavailable' });
-
-      return res.status(500).json({ error: 'Error updating notes' }); 
+      errorHandler(e, res);
     }
 
     // updateOne /api/notes/:id
@@ -181,29 +166,20 @@ export const update = async (req: Request, res: Response) => {
 
     } catch(e) {
 
-      if(axios.isAxiosError(e)) {
-        if(e.response) return res.status(e.response.data).json(e.response.data);
-      }
-
-      if(e instanceof Error && e.message.includes('ECONNREFUSED')) return res.status(503).json({ error: 'Notes service unavailable' });
-
-      return res.status(500).json({ error: 'Error updating note' });
+      errorHandler(e, res);
     }
 
   }
 }
 
 
-// '/:id' or 'body'
 export const remove = async (req: Request, res: Response) => {
 
   validate(req);
 
   let response;
 
-  // removeMany /api/notes/
   if(req?.body?.ids) {
-    console.log('removeMany - req.body: ', req.body);
 
     let { ids } = req.body;
 
@@ -213,20 +189,15 @@ export const remove = async (req: Request, res: Response) => {
 
       response = await javaClient.delete('/notes', { data: { ids } });
 
+      console.log('response: ', response);
+
       return res.json({ result: response.data });
 
     } catch(e) {
 
-      if(axios.isAxiosError(e)) {
-        if(e.response) return res.status(e.response.data).json(e.response.data);
-      }
-
-      if(e instanceof Error && e.message.includes('ECONNREFUSED')) return res.status(503).json({ error: 'Notes service unavailable' });
-
-      return res.status(500).json({ error: 'Error removing note' });
+      errorHandler(e, res);
     }
 
-    // removeOne /api/notes/:id
   } else if(req?.params?.id) {
 
     let id = parseId(req);
@@ -236,41 +207,23 @@ export const remove = async (req: Request, res: Response) => {
     try {
 
       response = await javaClient.delete(`/notes/${id}`);
+
+      console.log('response: ', response);
       
       return res.json({ result: response.data });
 
     } catch(e) {
 
-      if(axios.isAxiosError(e)) {
-        if(e.response) return res.status(e.response.data).json(e.response.data);
-      }
-
-      if(e instanceof Error && e.message.includes('ECONNREFUSED')) return res.status(503).json({ error: 'Notes service unavailable' });
-
-      return res.status(500).json({ error: 'Error removing note' });
+      errorHandler(e, res);
     }
-    
-  } else {
-    
-    return res.status(400).json({ error: 'Invalid request for remove' });
   }
-  // notes = notes.filter(n => !idsToRemove.includes(n.id));
 
-  // if(notes.length === notesLength) {
-  //   return res.status(404).json({ error: 'Unable to remove notes' });
-
-  // } else if(notes.length === (notesLength - idsToRemove.length)) {
-  //   return res.status(200).json({ result: idsToRemove });
-
-  // }
 }
 
 // Helper Function
 const validate = (req: Request) => {
   if(!req || (!req.body == null && req.params == null)) new Error('Invalid Request');
   
-  // se tem body é getMany, insert, update ou delete
-  // se tem id é getOne, update ou delete
   let id = req.params?.id;
 
   if(id && id !== undefined && typeof id === 'string') {
