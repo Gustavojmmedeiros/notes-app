@@ -4,7 +4,6 @@ import { EditNoteButton } from './Button';
 
 interface NoteCardProps {
   note: Note;
-  // to: string;
 }
 
 const NoteCard = ({ note }: NoteCardProps) => {
@@ -19,7 +18,7 @@ const NoteCard = ({ note }: NoteCardProps) => {
         Tags: 
         {note.tags.map((tag, index) => (
           <span key={index} className='tag'>
-            {tag}
+            {tag.label}
           </span>
         ))}
       </div>

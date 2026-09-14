@@ -1,20 +1,31 @@
 package com.notes.backend_java.service;
 
 import com.notes.backend_java.model.Note;
-import com.notes.backend_java.repository.NoteRepository;
+import com.notes.backend_java.model.Tag;
+import com.notes.backend_java.repository.*;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class NoteService {
   
   private final NoteRepository noteRepository;
+  private final TagRepository tagRepository;
+  private final TagService tagService;
 
-  public NoteService(NoteRepository noteRepository) {
+  public NoteService(NoteRepository noteRepository, 
+                    TagRepository tagRepository, 
+                    TagService tagService) {
     this.noteRepository = noteRepository;
+    this.tagRepository = tagRepository;
+    this.tagService = tagService;
   }
 
   public List<Note> getAll() {
@@ -25,67 +36,98 @@ public class NoteService {
     return noteRepository.findAllByOrderByUpdatedAtDesc();
   }
 
+  @Transactional
   public Note getOne(Long id) {
-    return noteRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Note not found"));
+    Note note = noteRepository.findById(id)
+            .orElseThrow(() -> new ResponseStatusException(
+              HttpStatus.NOT_FOUND,"Note not found"));
+
+    return note;
   }
 
   public List<Note> getNotesByIds(List<Long> ids) {
     return noteRepository.findAllById(ids);
   }
 
-  public List<Note> findByContent(String content) {
-    return noteRepository.findByContent(content);
-  }
+  public List<Note> filterNotes(String content, String tagLabel, String title) {
+    List<Note> notes = noteRepository.findAll();
 
-  public List<Note> findByTags(String tags) {
-    return noteRepository.findByTags(tags);
-  }
+    if(content != null && !content.isEmpty()) {
+      notes = notes.stream()
+              .filter(n -> n.getContent().toLowerCase().contains(content.toLowerCase()))
+              .collect((Collectors.toList()));
+    }
 
-  public List<Note> findByTitle(String title) {
-    return noteRepository.findByTitle(title);
-  }
+    if(title != null && !title.isEmpty()) {
+      notes = notes.stream()
+              .filter(n -> n.getTitle().toLowerCase().contains(title.toLowerCase()))
+              .collect((Collectors.toList()));
+    }
 
-  public List<Note> findByContentAndTags(String content, String tags) {
-    return noteRepository.findByContentAndTags(content, tags);
-  }
+    if(tagLabel != null && !tagLabel.isEmpty()) {
+      notes = notes.stream()
+              .filter(n -> n.getTags().stream()
+                      .anyMatch(t -> t.getLabel().toLowerCase().contains(tagLabel.toLowerCase())))
+                      .collect(Collectors.toList());
 
-  public List<Note> findByContentAndTitle(String content, String title) {
-    return noteRepository.findByContentAndTitle(content, title);
-  }
+    }
 
-  public List<Note> findByTagsAndTitle(String tags, String title) {
-    return noteRepository.findByTagsAndTitle(tags, title);
-  }
-
-  public List<Note> findByContentAndTagsAndTitle(String content, String tags, String title) {
-    return noteRepository.findByContentAndTagsAndTitle(content, tags, title);
-  }
-
-  public Note insert(Note note) {
-    note.setCreatedAt(LocalDateTime.now());
-    note.setUpdatedAt(LocalDateTime.now());
-
-    return noteRepository.save(note);
-  }
-
-  public Note updateOne(String content, Long id, List<String> tags, String title) {
-    Note note = getOne(id);
-
-    if(content != null) note.setContent(content);
-    if(tags != null && !tags.isEmpty()) note.setTags(tags);
-    if(title != null) note.setTitle(title);
-
-    note.setUpdatedAt(LocalDateTime.now());
-
-    return noteRepository.save(note);
+    return notes;
   }
 
   @Transactional
-  public int updateMany(List<Long> ids, String content, List<String> tags, String title) {
+  public Note createNote(Note note) {
+    if(note.getTags() != null && !note.getTags().isEmpty()) {
+      List<Long> tagIds = note.getTags().stream()
+                          .map(tag -> tag.getId())
+                          .collect(Collectors.toList());
+
+      List<Tag> tags = tagRepository.findAllById(tagIds);
+      
+      note.setTags(tags);
+    }
+
+    note.setCreatedAt(LocalDateTime.now());
+    note.setUpdatedAt(LocalDateTime.now());
+
+    Note createdNote = noteRepository.save(note);
+
+    // Forces tags "existence"
+    createdNote.getTags().size();
+
+    return createdNote;
+  }
+
+  public int updateOne(Long id, String content, String title, List<Long> tagIds) {
+    Note note = getOne(id);
+
+    if(content != null) note.setContent(content);
+    if(title   != null) note.setTitle(title);
+    if(tagIds  != null) {
+      List<Tag> tags = tagService.getAll().stream()
+                        .filter(t -> tagIds.contains(t.getId())) // getId from Note model
+                        .collect(Collectors.toList());
+
+      note.setTags(tags);  
+    }
+
+    note.setUpdatedAt(LocalDateTime.now());
+    noteRepository.save(note);
+
+    return 1;
+  }
+
+  @Transactional
+  public int updateMany(List<Long> ids, String content, String title, List<Long> tagIds) {
     List<Note> notes = noteRepository.findAllById(ids);
 
-    if(notes.isEmpty()) return 0;
+    if(notes.isEmpty()) {
+      return 0;
+    }
+
+    List<Tag> tags = tagIds != null ? tagService.getAll().stream()
+                    .filter(t -> tagIds.contains(t.getId()))
+                    .collect(Collectors.toList()) : null;
 
     for(Note note : notes) {
       if(content != null) note.setContent(content);
@@ -97,15 +139,56 @@ public class NoteService {
     noteRepository.saveAll(notes);
 
     return notes.size();
+    // return noteRepository.updateMany(ids, title, content, tags, LocalDateTime.now());
   }
 
-  public void deleteOne(Long id) {
+  public void deleteNote(Long id) {
+    noteRepository.findById(id)
+            .orElseThrow(() -> new ResponseStatusException(
+              HttpStatus.NOT_FOUND,"Note not found"));
+
     noteRepository.deleteById(id);
   }
 
   @Transactional
-  public void deleteMany(List<Long> ids) {
-    noteRepository.deleteAllById(ids);
+  public int deleteNotes(List<Long> ids) {
+    // noteRepository.deleteAllById(ids);
+    if(ids == null || ids.isEmpty()) {
+      return 0;
+    }
+
+    List<Note> notes = noteRepository.findAllById(ids);
+
+    if(notes.size() != ids.size()) {
+      throw new ResponseStatusException(
+        HttpStatus.NOT_FOUND, "One or more notes not found"
+      );
+    }
+
+    noteRepository.deleteAll(notes);
+
+    return notes.size();
   }
 
+  @Transactional
+  public Note addTagToNote(Long noteId, Long tagId) {
+    Note note = getOne(noteId);
+    Tag tag = tagService.getOne(tagId);
+
+    if(!note.getTags().contains(tag)) {
+      note.getTags().add(tag);
+    }
+
+    return noteRepository.save(note);
+  }
+
+  @Transactional
+  public Note removeTagFromNote(Long noteId, Long tagId) {
+    Note note = getOne(noteId);
+    Tag tag = tagService.getOne(tagId);
+
+    note.getTags().remove(tag);
+
+    return noteRepository.save(note);
+  }
 }

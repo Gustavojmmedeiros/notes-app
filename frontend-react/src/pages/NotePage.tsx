@@ -6,6 +6,7 @@ import { getNoteById, updateNote } from '../api/notes';
 import { Note as NoteType } from '../types';
 import { BackButton } from '../components/Button';
 import NoteForm from '../components/NoteForm';
+import { Tag } from '../types';
 
 interface NotePageProps {
   setNotes: React.Dispatch<React.SetStateAction<NoteType[]>>;
@@ -45,7 +46,7 @@ const NotePage = ({ setNotes }: NotePageProps) => {
 
   },[fetchNote]);
 
-  const handleUpdate = async (data: { title: string; content: string; tags: string[] }) => {
+  const handleUpdate = async (data: { title: string; content: string; tags: Tag[] }) => {
 
     try {
 
