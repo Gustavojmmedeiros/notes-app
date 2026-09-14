@@ -3,6 +3,7 @@ import { createNote } from '../api/notes';
 import NoteForm from '../components/NoteForm'
 import { BackButton } from '../components/Button';
 import { Note } from '../types/index';
+import { Tag } from '../types/index';
 
 interface NewNoteProps {
   setNotes: React.Dispatch<React.SetStateAction<Note[]>>;
@@ -12,7 +13,7 @@ const NewNote = ({ setNotes }: NewNoteProps) => {
 
   const navigate = useNavigate();
 
-  const handleSubmit = async (data: { title: string, content: string, tags: string[] }) => {
+  const handleSubmit = async (data: { title: string, content: string, tags: Tag[] }) => {
   
     try {
       

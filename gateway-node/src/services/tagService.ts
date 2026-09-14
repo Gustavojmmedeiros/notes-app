@@ -9,6 +9,8 @@ export const createTag = async (label: string): Promise<Tag | null> => {
 
   try {
 
+    console.log('tagService: ', label);
+
     const response = await javaClient.post('/tags', { label });
 
     return response.data;

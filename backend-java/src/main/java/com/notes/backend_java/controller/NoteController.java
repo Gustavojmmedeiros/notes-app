@@ -61,6 +61,8 @@ public class NoteController {
   @ResponseStatus(HttpStatus.CREATED)
   public Note create(@RequestBody Note note) {
 
+    System.out.println("NoteController: " + note);
+
     return noteService.createNote(note);
   }
 

@@ -30,10 +30,10 @@ public class TagService {
   }
 
   public List<Tag> getTagByLabelContaining(String label) {
-    System.out.println("getTagByLabelContaining: " + label);
     return tagRepository.findByLabelContaining(label);
   }
 
+  @Transactional
   public Tag createTag(Tag tag) {
     if(tag.getLabel() == null || tag.getLabel().isEmpty()) {
       throw new RuntimeException("Label cannot be empty or null");

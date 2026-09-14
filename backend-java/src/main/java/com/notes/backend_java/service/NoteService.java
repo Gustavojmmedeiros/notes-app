@@ -2,7 +2,7 @@ package com.notes.backend_java.service;
 
 import com.notes.backend_java.model.Note;
 import com.notes.backend_java.model.Tag;
-import com.notes.backend_java.repository.NoteRepository;
+import com.notes.backend_java.repository.*;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -17,10 +17,14 @@ import java.util.stream.Collectors;
 public class NoteService {
   
   private final NoteRepository noteRepository;
+  private final TagRepository tagRepository;
   private final TagService tagService;
 
-  public NoteService(NoteRepository noteRepository, TagService tagService) {
+  public NoteService(NoteRepository noteRepository, 
+                    TagRepository tagRepository, 
+                    TagService tagService) {
     this.noteRepository = noteRepository;
+    this.tagRepository = tagRepository;
     this.tagService = tagService;
   }
 
@@ -73,6 +77,16 @@ public class NoteService {
 
   @Transactional
   public Note createNote(Note note) {
+    if(note.getTags() != null && !note.getTags().isEmpty()) {
+      List<Long> tagIds = note.getTags().stream()
+                          .map(tag -> tag.getId())
+                          .collect(Collectors.toList());
+
+      List<Tag> tags = tagRepository.findAllById(tagIds);
+      
+      note.setTags(tags);
+    }
+
     note.setCreatedAt(LocalDateTime.now());
     note.setUpdatedAt(LocalDateTime.now());
 

@@ -82,6 +82,8 @@ export const insert = async (req: Request, res: Response) => {
 
   let { title, content, tags = [] } = req.body;
 
+  console.log('notesController - req.body: ', req.body);
+
   if(!title || !content) res.status(400).json({ error: 'Title and Content are mandatory' });
 
   try {
@@ -95,8 +97,16 @@ export const insert = async (req: Request, res: Response) => {
         
         formattedTags = tagIds.map(id => ({ id }));
 
-      } else if(typeof tags[0] === 'object' && tags[0].id) {
+        // valid id: > 0
+      } else if(typeof tags[0] === 'object' && tags[0].id && tags[0].id > 0) {
         formattedTags = tags.map((t: any) => ({ id: t.id }));
+
+      //   // placeholder from frontend, id = 0
+      } else if(typeof tags[0] === 'object' && tags[0].label) {
+        let labels = tags.map((t: any) => t.label),
+            tagIds = await getTagsByLabels(labels);
+
+        formattedTags = tagIds.map(id => ({ id }));
 
       } else if(typeof tags[0] === 'number') {
         formattedTags = tags.map((id: number) => ({ id }));
@@ -105,7 +115,6 @@ export const insert = async (req: Request, res: Response) => {
     }
 
     let response = await javaClient.post('/notes', { title, content, tags: formattedTags });
-
 
     return res.status(201).json({ note: response.data });
 
